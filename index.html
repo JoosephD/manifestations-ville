@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Interactive des Manifestations Agricoles - Mai 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        /* Panneau de contrôle principal */
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-width: 350px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .control-panel h2 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            color: #2c5f2d;
+            border-bottom: 2px solid #2c5f2d;
+            padding-bottom: 8px;
+        }
+        
+        .control-panel h3 {
+            margin: 15px 0 10px 0;
+            font-size: 16px;
+            color: #2c5f2d;
+        }
+        
+        /* Statistiques */
+        .stats {
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .stat-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-value {
+            color: #2c5f2d;
+            font-weight: bold;
+        }
+        
+        /* Filtres */
+        .filter-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .filter-group {
+            margin: 10px 0;
+        }
+        
+        .filter-group label {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+        
+        .filter-group label:hover {
+            background: #e9ecef;
+        }
+        
+        .filter-group input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .filter-buttons button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        
+        .btn-all {
+            background: #2c5f2d;
+            color: white;
+        }
+        
+        .btn-all:hover {
+            background: #1e4620;
+        }
+        
+        .btn-none {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-none:hover {
+            background: #c0392b;
+        }
+        
+        /* Timeline */
+        .timeline-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .timeline-slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+        
+        .timeline-date {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c5f2d;
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .timeline-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .timeline-controls button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            background: #3498db;
+            color: white;
+            transition: background 0.2s;
+        }
+        
+        .timeline-controls button:hover {
+            background: #2980b9;
+        }
+        
+        .timeline-controls button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        /* Légende */
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        
+        .legend h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #333;
+        }
+        
+        /* Popup */
+        .popup-content {
+            max-width: 300px;
+        }
+        
+        .popup-content h3 {
+            margin: 0 0 10px 0;
+            color: #2c5f2d;
+            font-size: 16px;
+        }
+        
+        .popup-content p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .popup-content strong {
+            color: #2c5f2d;
+        }
+        
+        /* Badge de compteur */
+        .count-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="control-panel">
+        <h2>🎛️ Panneau de contrôle</h2>
+        
+        <!-- Statistiques -->
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Manifestations affichées :</span>
+                <span class="stat-value" id="visible-count">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total :</span>
+                <span class="stat-value" id="total-count">0</span>
+            </div>
+        </div>
+        
+        <!-- Timeline -->
+        <div class="timeline-section">
+            <h3>📅 Timeline</h3>
+            <div class="timeline-date" id="current-date">Toutes les dates</div>
+            <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="8" value="0" step="1">
+            <div class="timeline-controls">
+                <button id="prev-day">◀ Jour précédent</button>
+                <button id="play-pause">▶ Lecture</button>
+                <button id="next-day">Jour suivant ▶</button>
+            </div>
+            <div style="margin-top: 10px; text-align: center;">
+                <button class="btn-all" style="width: 100%;" id="reset-timeline">Afficher toutes les dates</button>
+            </div>
+        </div>
+        
+        <!-- Filtre par type d'action -->
+        <div class="filter-section">
+            <h3>📌 Type d'action</h3>
+            <div class="filter-group" id="type-filters"></div>
+            <div class="filter-buttons">
+                <button class="btn-all" id="select-all-types">Tout sélectionner</button>
+                <button class="btn-none" id="select-none-types">Tout désélectionner</button>
+            </div>
+        </div>
+        
+        <!-- Filtre par syndicat -->
+        <div class="filter-section">
+            <h3>🚜 Syndicat</h3>
+            <div class="filter-group" id="syndicat-filters"></div>
+            <div class="filter-buttons">
+                <button class="btn-all" id="select-all-syndicats">Tout sélectionner</button>
+                <button class="btn-none" id="select-none-syndicats">Tout désélectionner</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>Types d'action</h3>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #e74c3c;"></div>
+            <span>Blocage routier</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #3498db;"></div>
+            <span>Manifestation classique</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #f39c12;"></div>
+            <span>Action coup de poing</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #9b59b6;"></div>
+            <span>Permanences ciblées</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #2ecc71;"></div>
+            <span>Grande distribution</span>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Données des manifestations
+        const manifestations = [
+            {lieu: "Rodez", dept: "Aveyron", date: "15 mai", dateSort: "2026-05-15", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "Une dizaine", lat: 44.3508, lon: 2.5750, details: "Des agriculteurs ont déchargé des bottes de paille sur un rond-point proche de l'aéroport."},
+            {lieu: "Arras", dept: "Pas-de-Calais", date: "15 mai", dateSort: "2026-05-15", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "Plus de 200 agriculteurs", lat: 50.2917, lon: 2.7800, details: "Une centaine de tracteurs ont convergé à l'entrée nord d'Arras."},
+            {lieu: "Montauban", dept: "Tarn-et-Garonne", date: "15 mai", dateSort: "2026-05-15", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "170 personnes", lat: 44.0186, lon: 1.3550, details: "Près de deux cents agriculteurs ont déversé une quarantaine de bennes."},
+            {lieu: "Tarbes", dept: "Hautes-Pyrénées", date: "15 mai", dateSort: "2026-05-15", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 43.2333, lon: 0.0781, details: "Un cortège s'est rendu à la permanence du député Denis Fégné."},
+            {lieu: "Bagnères-de-Bigorre", dept: "Hautes-Pyrénées", date: "15 mai", dateSort: "2026-05-15", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 43.0667, lon: 0.1500, details: "Des pneus et du fumier déversés devant la permanence de Sylvie Ferrer."},
+            {lieu: "Nîmes", dept: "Gard", date: "16 mai", dateSort: "2026-05-16", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "", lat: 43.8367, lon: 4.3601, details: "Déversement de paille et de fruits abimés devant la DDTM."},
+            {lieu: "Narbonne", dept: "Aude", date: "16 mai", dateSort: "2026-05-16", type: "Action coup de poing", syndicat: "JA", participants: "", lat: 43.1839, lon: 3.0044, details: "Des banderoles tendues sur les ronds-points d'entrées de Narbonne."},
+            {lieu: "Ghisonaccia", dept: "Haute-Corse", date: "16 mai", dateSort: "2026-05-16", type: "Action coup de poing", syndicat: "Non précisé", participants: "Une quarantaine", lat: 42.0153, lon: 9.4050, details: "Manifestation suite à une augmentation du prix de l'eau de 15%."},
+            {lieu: "Vierzon", dept: "Cher", date: "16 mai", dateSort: "2026-05-16", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 47.2231, lon: 2.0706, details: "Action devant la permanence de Nicolas Sansu (PCF)."},
+            {lieu: "Bourges", dept: "Cher", date: "16 mai", dateSort: "2026-05-16", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 47.0844, lon: 2.3986, details: "Permanences murées à l'aide de parpaings."},
+            {lieu: "Auxerre", dept: "Yonne", date: "17 mai", dateSort: "2026-05-17", type: "Manifestation classique", syndicat: "Union nationale des apiculteurs", participants: "Une cinquantaine", lat: 47.7983, lon: 3.5681, details: "Rassemblement des apiculteurs contre les néonicotinoïdes."},
+            {lieu: "Poitiers", dept: "Vienne", date: "18 mai", dateSort: "2026-05-18", type: "Permanences parlementaires ciblées", syndicat: "JA", participants: "Une vingtaine", lat: 46.5802, lon: 0.3404, details: "Obstruction de l'entrée de la permanence avec des bottes de paille."},
+            {lieu: "Steenvoorde", dept: "Nord", date: "19-20 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "", lat: 50.8183, lon: 2.5933, details: "Blocage de l'A25 pendant deux jours."},
+            {lieu: "Avesnes-sur-Helpe", dept: "Nord", date: "19 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 50.1250, lon: 3.9333, details: "Blocage du rond-point de la Rotonde."},
+            {lieu: "Blois", dept: "Loir-et-Cher", date: "19 mai", dateSort: "2026-05-19", type: "Manifestation classique", syndicat: "Coordination rurale", participants: "", lat: 47.5933, lon: 1.3281, details: "Convergence des luttes avec les taxis."},
+            {lieu: "Blois", dept: "Loir-et-Cher", date: "19 mai", dateSort: "2026-05-19", type: "Manifestation classique", syndicat: "FNSEA", participants: "", lat: 47.5933, lon: 1.3281, details: "Réunion devant la Chambre d'agriculture."},
+            {lieu: "Marly-lez-Valenciennes", dept: "Nord", date: "19 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "30 manifestants", lat: 50.3419, lon: 3.5453, details: "Fermeture de l'A2 dans les deux sens."},
+            {lieu: "Seclin", dept: "Nord", date: "19 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "70 tracteurs", lat: 50.5514, lon: 3.0308, details: "Blocage de l'A1 avec 70 tracteurs."},
+            {lieu: "Nantes", dept: "Loire-Atlantique", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "FNSEA", participants: "Une dizaine", lat: 47.2184, lon: -1.5536, details: "Opération au Carrefour de la Beaujoire contre les tomates importées."},
+            {lieu: "Avignon", dept: "Vaucluse", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 43.9493, lon: 4.8055, details: "Action au rayon fruits et légumes du Carrefour Courtine."},
+            {lieu: "Pacé", dept: "Ille-et-Vilaine", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "", lat: 48.1500, lon: -1.7667, details: "Action dans le supermarché Carrefour de Pacé."},
+            {lieu: "Châteaulin", dept: "Finistère", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 48.1967, lon: -4.0914, details: "Dénonciation des pratiques de certains distributeurs."},
+            {lieu: "Quimper", dept: "Finistère", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 47.9960, lon: -4.0978, details: "Action sur la vente des tomates cerises françaises."},
+            {lieu: "Guéret", dept: "Creuse", date: "21 mai", dateSort: "2026-05-21", type: "Manifestation classique", syndicat: "Coordination rurale", participants: "Une soixantaine", lat: 46.1706, lon: 1.8714, details: "Soutien à trois membres jugés pour dégradations."},
+            {lieu: "Troyes", dept: "Aube", date: "21 mai", dateSort: "2026-05-21", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "Une soixantaine", lat: 48.2973, lon: 4.0744, details: "Rassemblement devant la préfecture de l'Aube."},
+            {lieu: "Poitiers", dept: "Vienne", date: "21 mai", dateSort: "2026-05-21", type: "Permanences parlementaires ciblées", syndicat: "Coordination rurale", participants: "", lat: 46.5802, lon: 0.3404, details: "Action à la permanence du député Sacha Houlié."},
+            {lieu: "Tulle", dept: "Corrèze", date: "21 mai", dateSort: "2026-05-21", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "Une cinquantaine", lat: 45.2656, lon: 1.7711, details: "Déversement de fumier devant la permanence de François Hollande."},
+            {lieu: "Beauvais", dept: "Oise", date: "22 mai", dateSort: "2026-05-22", type: "Blocage routier", syndicat: "FNSEA", participants: "", lat: 49.4295, lon: 2.0807, details: "Cortège de tracteurs jusqu'à l'autoroute A16."},
+            {lieu: "Privas", dept: "Ardèche", date: "22 mai", dateSort: "2026-05-22", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "Une vingtaine", lat: 44.7356, lon: 4.5989, details: "Collage d'affiches sur bâtiments publics."},
+            {lieu: "Sault-lès-Rethel", dept: "Ardennes", date: "22 mai", dateSort: "2026-05-22", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "Une trentaine", lat: 49.5167, lon: 4.3667, details: "Opération de tractage."},
+            {lieu: "Auxerre", dept: "Yonne", date: "22 mai", dateSort: "2026-05-22", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "Soixante-dix", lat: 47.7983, lon: 3.5681, details: "Manifestation devant la préfecture à Auxerre."},
+            {lieu: "Le Mans", dept: "Sarthe", date: "23 mai", dateSort: "2026-05-23", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "", lat: 48.0077, lon: 0.1984, details: "Actions devant les permanences des députés sarthois."},
+            {lieu: "Saugues", dept: "Haute-Loire", date: "23 mai", dateSort: "2026-05-23", type: "Manifestation classique", syndicat: "FNSEA", participants: "", lat: 44.9583, lon: 3.5444, details: "Rassemblement en soutien à la Loi Duplomb."}
+        ];
+
+        // Initialisation de la carte
+        const map = L.map('map').setView([46.603354, 1.888334], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        // Fonction pour obtenir la couleur selon le type d'action
+        function getColor(type) {
+            switch(type) {
+                case "Blocage routier": return "#e74c3c";
+                case "Manifestation classique": return "#3498db";
+                case "Action coup de poing": return "#f39c12";
+                case "Permanences parlementaires ciblées": return "#9b59b6";
+                case "Grande distribution": return "#2ecc71";
+                default: return "#95a5a6";
+            }
+        }
+
+        // Stockage des marqueurs
+        let markers = [];
+
+        // Fonction pour créer les marqueurs
+        function createMarkers() {
+            manifestations.forEach(manif => {
+                const marker = L.circleMarker([manif.lat, manif.lon], {
+                    radius: 8,
+                    fillColor: getColor(manif.type),
+                    color: "#333",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+
+                const popupContent = `
+                    <div class="popup-content">
+                        <h3>${manif.lieu} (${manif.dept})</h3>
+                        <p><strong>Date :</strong> ${manif.date}</p>
+                        <p><strong>Type :</strong> ${manif.type}</p>
+                        <p><strong>Syndicat(s) :</strong> ${manif.syndicat}</p>
+                        <p><strong>Participants :</strong> ${manif.participants || 'Non précisé'}</p>
+                        <p><strong>Détails :</strong> ${manif.details}</p>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                marker.manifestation = manif;
+                markers.push(marker);
+            });
+        }
+
+        // Création des marqueurs
+        createMarkers();
+
+        // Extraction des types et syndicats uniques
+        const types = [...new Set(manifestations.map(m => m.type))];
+        const syndicats = [...new Set(manifestations.map(m => m.syndicat))];
+        
+        // Comptage des occurrences
+        const typeCounts = {};
+        const syndicatCounts = {};
+        
+        manifestations.forEach(m => {
+            typeCounts[m.type] = (typeCounts[m.type] || 0) + 1;
+            syndicatCounts[m.syndicat] = (syndicatCounts[m.syndicat] || 0) + 1;
+        });
+
+        // Création des filtres par type
+        const typeFiltersDiv = document.getElementById('type-filters');
+        types.forEach(type => {
+            const label = document.createElement('label');
+            label.innerHTML = `
+                <input type="checkbox" class="type-filter" value="${type}" checked>
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${getColor(type)}; margin-right: 5px;"></span>
+                ${type}
+                <span class="count-badge">${typeCounts[type]}</span>
+            `;
+            typeFiltersDiv.appendChild(label);
+        });
+
+        // Création des filtres par syndicat
+        const syndicatFiltersDiv = document.getElementById('syndicat-filters');
+        syndicats.forEach(syndicat => {
+            const label = document.createElement('label');
+            label.innerHTML = `
+                <input type="checkbox" class="syndicat-filter" value="${syndicat}" checked>
+                ${syndicat}
+                <span class="count-badge">${syndicatCounts[syndicat]}</span>
+            `;
+            syndicatFiltersDiv.appendChild(label);
+        });
+
+        // Timeline
+        const dates = [
+            {label: "Toutes les dates", value: null},
+            {label: "15 mai 2026", value: "2026-05-15"},
+            {label: "16 mai 2026", value: "2026-05-16"},
+            {label: "17 mai 2026", value: "2026-05-17"},
+            {label: "18 mai 2026", value: "2026-05-18"},
+            {label: "19 mai 2026", value: "2026-05-19"},
+            {label: "20 mai 2026", value: "2026-05-20"},
+            {label: "21 mai 2026", value: "2026-05-21"},
+            {label: "22 mai 2026", value: "2026-05-22"},
+            {label: "23 mai 2026", value: "2026-05-23"}
+        ];
+
+        const timelineSlider = document.getElementById('timeline-slider');
+        const currentDateDiv = document.getElementById('current-date');
+        let currentDateIndex = 0;
+        let isPlaying = false;
+        let playInterval;
+
+        // Fonction pour appliquer les filtres
+        function applyFilters() {
+            const selectedTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.value);
+            const selectedSyndicats = Array.from(document.querySelectorAll('.syndicat-filter:checked')).map(cb => cb.value);
+            const selectedDate = dates[currentDateIndex].value;
+
+            let visibleCount = 0;
+
+            markers.forEach(marker => {
+                const manif = marker.manifestation;
+                const typeMatch = selectedTypes.includes(manif.type);
+                const syndicatMatch = selectedSyndicats.includes(manif.syndicat);
+                const dateMatch = !selectedDate || manif.dateSort === selectedDate;
+
+                if (typeMatch && syndicatMatch && dateMatch) {
+                    if (!map.hasLayer(marker)) {
+                        marker.addTo(map);
+                    }
+                    visibleCount++;
+                } else {
+                    if (map.hasLayer(marker)) {
+                        map.removeLayer(marker);
+                    }
+                }
+            });
+
+            document.getElementById('visible-count').textContent = visibleCount;
+        }
+
+        // Mise à jour de la timeline
+        function updateTimeline() {
+            currentDateDiv.textContent = dates[currentDateIndex].label;
+            timelineSlider.value = currentDateIndex;
+            applyFilters();
+        }
+
+        // Event listeners pour les filtres
+        document.querySelectorAll('.type-filter, .syndicat-filter').forEach(checkbox => {
+            checkbox.addEventListener('change', applyFilters);
+        });
+
+        // Boutons "Tout sélectionner / désélectionner"
+        document.getElementById('select-all-types').addEventListener('click', () => {
+            document.querySelectorAll('.type-filter').forEach(cb => cb.checked = true);
+            applyFilters();
+        });
+
+        document.getElementById('select-none-types').addEventListener('click', () => {
+            document.querySelectorAll('.type-filter').forEach(cb => cb.checked = false);
+            applyFilters();
+        });
+
+        document.getElementById('select-all-syndicats').addEventListener('click', () => {
+            document.querySelectorAll('.syndicat-filter').forEach(cb => cb.checked = true);
+            applyFilters();
+        });
+
+        document.getElementById('select-none-syndicats').addEventListener('click', () => {
+            document.querySelectorAll('.syndicat-filter').forEach(cb => cb.checked = false);
+            applyFilters();
+        });
+
+        // Timeline slider
+        timelineSlider.addEventListener('input', (e) => {
+            currentDateIndex = parseInt(e.target.value);
+            updateTimeline();
+        });
+
+        // Boutons de navigation temporelle
+        document.getElementById('prev-day').addEventListener('click', () => {
+            if (currentDateIndex > 0) {
+                currentDateIndex--;
+                updateTimeline();
+            }
+        });
+
+        document.getElementById('next-day').addEventListener('click', () => {
+            if (currentDateIndex < dates.length - 1) {
+                currentDateIndex++;
+                updateTimeline();
+            }
+        });
+
+        // Bouton lecture/pause
+        const playPauseBtn = document.getElementById('play-pause');
+        playPauseBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playPauseBtn.textContent = '▶ Lecture';
+                isPlaying = false;
+            } else {
+                playPauseBtn.textContent = '⏸ Pause';
+                isPlaying = true;
+                playInterval = setInterval(() => {
+                    if (currentDateIndex < dates.length - 1) {
+                        currentDateIndex++;
+                        updateTimeline();
+                    } else {
+                        clearInterval(playInterval);
+                        playPauseBtn.textContent = '▶ Lecture';
+                        isPlaying = false;
+                    }
+                }, 2000); // Change de jour toutes les 2 secondes
+            }
+        });
+
+        // Reset timeline
+        document.getElementById('reset-timeline').addEventListener('click', () => {
+            currentDateIndex = 0;
+            updateTimeline();
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playPauseBtn.textContent = '▶ Lecture';
+                isPlaying = false;
+            }
+        });
+
+        // Initialisation
+        document.getElementById('total-count').textContent = manifestations.length;
+        applyFilters();
+    </script>
+</body>
+</html>
