@@ -1,14 +1,14 @@
 [
   {
-    "lieu": "Tarascon",
-    "dept": "Bouches-du-Rhône",
-    "date": "15 mai",
+    "lieu": "beaucaire",
+    "dept": "Gard",
+    "date": 46159,
     "dateSort": "2026-05-15",
     "type": "Manifestation classique",
     "syndicat": "JA et FNSEA",
     "participants": "Une centaine",
     "details": "Description de la manifestation",
-    "lat": 43.803011,
-    "lon": 4.65494
+    "lat": null,
+    "lon": null
   }
 ]
