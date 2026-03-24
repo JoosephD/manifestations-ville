@@ -583,6 +583,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
 let manifestations = [];
+let typeColors = {}; // Stockera les couleurs pour chaque type
 
 // Chargement des données depuis data.json
 fetch("data.json")
@@ -591,9 +592,13 @@ fetch("data.json")
       manifestations = data;
       console.log("Données chargées :", manifestations);
 
+      // Extraire les couleurs depuis les données
+      extractTypeColors();
+      
       createMarkers();
       initFilters();
       initTimeline();
+      createDynamicLegend();
       applyFilters();
 
       document.getElementById('total-count').textContent = manifestations.length;
@@ -603,6 +608,15 @@ fetch("data.json")
       alert("Impossible de charger data.json — assurez-vous qu'il est présent dans GitHub Pages.");
   });
 
+// Extraire les types et leurs couleurs depuis les données
+function extractTypeColors() {
+    manifestations.forEach(m => {
+        if (m.type && m.couleur && !typeColors[m.type]) {
+            typeColors[m.type] = m.couleur;
+        }
+    });
+    console.log("Types et couleurs détectés:", typeColors);
+}
 
 // Initialisation de la carte
 const map = L.map('map').setView([46.603354, 1.888334], 6);
@@ -612,17 +626,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18
 }).addTo(map);
 
-
-// Couleur selon type
+// Couleur selon type (utilise les couleurs du fichier)
 function getColor(type) {
-    switch(type) {
-        case "Blocage routier": return "#e74c3c";
-        case "Manifestation classique": return "#3498db";
-        case "Action coup de poing": return "#f39c12";
-        case "Permanences parlementaires ciblées": return "#9b59b6";
-        case "Grande distribution": return "#2ecc71";
-        default: return "#95a5a6";
-    }
+    return typeColors[type] || "#95a5a6"; // Gris par défaut si non trouvé
 }
 
 let markers = [];
@@ -657,7 +663,6 @@ function createMarkers() {
     });
 }
 
-
 // ---------------------
 // FILTRES
 // ---------------------
@@ -669,18 +674,21 @@ function initFilters() {
     typeFiltersDiv.innerHTML = "";
     syndicatFiltersDiv.innerHTML = "";
 
-    const types = [...new Set(manifestations.map(m => m.type))];
-    const syndicats = [...new Set(manifestations.map(m => m.syndicat))];
+    // Extraire uniquement les types présents dans les données
+    const types = [...new Set(manifestations.map(m => m.type))].filter(Boolean);
+    const syndicats = [...new Set(manifestations.map(m => m.syndicat))].filter(Boolean);
 
     const typeCounts = {};
     const syndicatCounts = {};
 
     manifestations.forEach(m => {
-        typeCounts[m.type] = (typeCounts[m.type] || 0) + 1;
-        syndicatCounts[m.syndicat] = (syndicatCounts[m.syndicat] || 0) + 1;
+        if (m.type) typeCounts[m.type] = (typeCounts[m.type] || 0) + 1;
+        if (m.syndicat) syndicatCounts[m.syndicat] = (syndicatCounts[m.syndicat] || 0) + 1;
     });
 
-    // Types
+    // Types - Triés par nombre de manifestations (décroissant)
+    types.sort((a, b) => typeCounts[b] - typeCounts[a]);
+    
     types.forEach(type => {
         const lbl = document.createElement("label");
         lbl.innerHTML = `
@@ -691,7 +699,9 @@ function initFilters() {
         typeFiltersDiv.appendChild(lbl);
     });
 
-    // Syndicats
+    // Syndicats - Triés par nombre de manifestations (décroissant)
+    syndicats.sort((a, b) => syndicatCounts[b] - syndicatCounts[a]);
+    
     syndicats.forEach(s => {
         const lbl = document.createElement("label");
         lbl.innerHTML = `
@@ -704,8 +714,47 @@ function initFilters() {
     // Listeners
     document.querySelectorAll('.type-filter, .syndicat-filter')
       .forEach(cb => cb.addEventListener('change', applyFilters));
+
+    // Boutons de sélection
+    document.getElementById('select-all-types').addEventListener('click', () => {
+        document.querySelectorAll('.type-filter').forEach(cb => cb.checked = true);
+        applyFilters();
+    });
+
+    document.getElementById('select-none-types').addEventListener('click', () => {
+        document.querySelectorAll('.type-filter').forEach(cb => cb.checked = false);
+        applyFilters();
+    });
+
+    document.getElementById('select-all-syndicats').addEventListener('click', () => {
+        document.querySelectorAll('.syndicat-filter').forEach(cb => cb.checked = true);
+        applyFilters();
+    });
+
+    document.getElementById('select-none-syndicats').addEventListener('click', () => {
+        document.querySelectorAll('.syndicat-filter').forEach(cb => cb.checked = false);
+        applyFilters();
+    });
 }
 
+// Créer la légende dynamiquement
+function createDynamicLegend() {
+    const legendDiv = document.getElementById('legend');
+    const types = Object.keys(typeColors);
+    
+    let html = '<h3>Types d\'action</h3>';
+    
+    types.forEach(type => {
+        html += `
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: ${typeColors[type]};"></div>
+                <span>${type}</span>
+            </div>
+        `;
+    });
+    
+    legendDiv.innerHTML = html;
+}
 
 // ---------------------
 // TIMELINE
@@ -713,23 +762,77 @@ function initFilters() {
 
 let dates = [];
 let currentDateIndex = 0;
+let isPlaying = false;
+let playInterval = null;
 
 function initTimeline() {
     dates = [
         {label: "Toutes les dates", value: null},
         ...Array.from(new Set(manifestations.map(m => m.dateSort)))
+            .filter(Boolean)
             .sort()
             .map(d => ({label: d, value: d}))
     ];
 
     document.getElementById("timeline-slider").max = dates.length - 1;
+
+    // Event listeners
+    document.getElementById('timeline-slider').addEventListener('input', (e) => {
+        currentDateIndex = parseInt(e.target.value);
+        updateTimeline();
+    });
+
+    document.getElementById('prev-day').addEventListener('click', () => {
+        if (currentDateIndex > 0) {
+            currentDateIndex--;
+            document.getElementById('timeline-slider').value = currentDateIndex;
+            updateTimeline();
+        }
+    });
+
+    document.getElementById('next-day').addEventListener('click', () => {
+        if (currentDateIndex < dates.length - 1) {
+            currentDateIndex++;
+            document.getElementById('timeline-slider').value = currentDateIndex;
+            updateTimeline();
+        }
+    });
+
+    document.getElementById('reset-timeline').addEventListener('click', () => {
+        currentDateIndex = 0;
+        document.getElementById('timeline-slider').value = 0;
+        updateTimeline();
+    });
+
+    document.getElementById('play-pause').addEventListener('click', () => {
+        const btn = document.getElementById('play-pause');
+        
+        if (isPlaying) {
+            clearInterval(playInterval);
+            btn.textContent = '▶';
+            isPlaying = false;
+        } else {
+            btn.textContent = '⏸';
+            isPlaying = true;
+            playInterval = setInterval(() => {
+                if (currentDateIndex < dates.length - 1) {
+                    currentDateIndex++;
+                    document.getElementById('timeline-slider').value = currentDateIndex;
+                    updateTimeline();
+                } else {
+                    clearInterval(playInterval);
+                    btn.textContent = '▶';
+                    isPlaying = false;
+                }
+            }, 1500);
+        }
+    });
 }
 
 function updateTimeline() {
     document.getElementById("current-date").textContent = dates[currentDateIndex].label;
     applyFilters();
 }
-
 
 // ---------------------
 // APPLICATION DES FILTRES
@@ -738,7 +841,7 @@ function updateTimeline() {
 function applyFilters() {
     const selectedTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(el => el.value);
     const selectedSyndicats = Array.from(document.querySelectorAll('.syndicat-filter:checked')).map(el => el.value);
-    const selectedDate = dates[currentDateIndex].value;
+    const selectedDate = dates[currentDateIndex]?.value;
 
     let visibleCount = 0;
 
@@ -759,7 +862,6 @@ function applyFilters() {
 
     document.getElementById('visible-count').textContent = visibleCount;
 }
-
 
 // -------------------------
 // MOBILE PANEL
