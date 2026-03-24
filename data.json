@@ -1,14 +1,26 @@
 [
   {
-    "lieu": "beaucaire",
+    "lieu": "Beaucaire",
     "dept": "Gard",
     "date": 46159,
-    "dateSort": "2026-05-15",
+    "dateSort": 46159,
     "type": "Manifestation classique",
     "syndicat": "JA et FNSEA",
     "participants": "Une centaine",
     "details": "Description de la manifestation",
-    "lat": null,
-    "lon": null
+    "lat": 43.731088,
+    "lon": 4.347971
+  },
+  {
+    "lieu": "Rodez",
+    "dept": "Aveyron",
+    "date": 46160,
+    "dateSort": 46160,
+    "type": "Grande distribution",
+    "syndicat": "CR",
+    "participants": "Une cinquantaine",
+    "details": "Description de la manifestation",
+    "lat": 44.342995,
+    "lon": 2.568962
   }
 ]
