@@ -30,6 +30,26 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
+        .template-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+        
+        .template-section h2 {
+            color: white;
+            margin-top: 0;
+            font-size: 24px;
+        }
+        
+        .template-section p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
         .upload-section {
             margin: 20px 0;
             padding: 20px;
@@ -71,6 +91,20 @@
             font-size: 14px;
             transition: all 0.3s;
             margin: 5px;
+        }
+        
+        .btn-template {
+            background: white;
+            color: #667eea;
+            font-size: 16px;
+            padding: 15px 40px;
+            border: 2px solid white;
+        }
+        
+        .btn-template:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         
         .btn-primary {
@@ -188,33 +222,114 @@
             border-radius: 3px;
             font-family: monospace;
         }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .feature-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        
+        .feature-card p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🚜 Back Office - Gestion des Manifestations</h1>
         
+        <!-- Section Template -->
+        <div class="template-section">
+            <h2>📥 Téléchargez le modèle Excel</h2>
+            <p>Commencez par télécharger notre modèle pré-rempli avec des exemples</p>
+            <button class="btn btn-template" id="download-template">
+                <span class="icon">📊</span> Télécharger le modèle Excel
+            </button>
+            
+            <div class="feature-grid" style="margin-top: 20px;">
+                <div class="feature-card">
+                    <h4>✅ Pré-formaté</h4>
+                    <p>Toutes les colonnes requises sont déjà en place</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📝 Exemples inclus</h4>
+                    <p>3 lignes d'exemples pour vous guider</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎨 Couleurs prêtes</h4>
+                    <p>Codes couleur hexadécimaux déjà remplis</p>
+                </div>
+            </div>
+        </div>
+
         <div class="instructions">
-            <h3>📋 Instructions</h3>
-            <p><strong>Format Excel requis :</strong></p>
+            <h3>📋 Instructions d'utilisation</h3>
+            <ol style="line-height: 1.8;">
+                <li><strong>Téléchargez</strong> le modèle Excel ci-dessus</li>
+                <li><strong>Ouvrez-le</strong> avec Excel, LibreOffice ou Google Sheets</li>
+                <li><strong>Remplissez</strong> vos données (vous pouvez supprimer les exemples)</li>
+                <li><strong>Sauvegardez</strong> le fichier au format .xlsx</li>
+                <li><strong>Importez-le</strong> ci-dessous pour le géocoder et publier</li>
+            </ol>
+            
+            <p><strong>Colonnes du fichier :</strong></p>
             <ul>
                 <li><code>lieu</code> : Nom de la ville/lieu</li>
                 <li><code>dept</code> : Numéro du département</li>
                 <li><code>date</code> : Date lisible (ex: "5 mai 2026")</li>
                 <li><code>dateSort</code> : Date au format YYYY-MM-DD (ex: "2026-05-05")</li>
-                <li><code>type</code> : Type d'action (peut être n'importe quel texte)</li>
+                <li><code>type</code> : Type d'action (libre, créez vos propres catégories !)</li>
                 <li><code>syndicat</code> : Nom du syndicat</li>
                 <li><code>participants</code> : Nombre de participants</li>
                 <li><code>details</code> : Description de la manifestation</li>
-                <li><code>lat</code> : Latitude (décimal)</li>
-                <li><code>lon</code> : Longitude (décimal)</li>
-                <li><code>couleur</code> : Code couleur hexadécimal (ex: "#e74c3c") - <em>Optionnel, sera généré aléatoirement si absent</em></li>
+                <li><code>lat</code> : Latitude (laissez vide, sera calculée automatiquement)</li>
+                <li><code>lon</code> : Longitude (laissez vide, sera calculée automatiquement)</li>
+                <li><code>couleur</code> : Code couleur hexadécimal (ex: "#e74c3c") - Optionnel</li>
             </ul>
-            <p><strong>Note :</strong> Vous pouvez créer autant de types d'action que vous le souhaitez. La légende et les filtres s'adapteront automatiquement !</p>
+            <p><strong>💡 Astuce :</strong> Vous pouvez créer autant de types d'action que vous le souhaitez. La carte s'adaptera automatiquement !</p>
         </div>
 
         <div class="upload-section">
-            <h2>📁 Importer un fichier Excel</h2>
+            <h2>📁 Importer votre fichier Excel</h2>
             <label for="file-input" class="file-label">Choisir un fichier Excel</label>
             <input type="file" id="file-input" accept=".xlsx,.xls">
             <p id="file-name" style="margin-top: 10px; color: #666;"></p>
@@ -240,6 +355,7 @@
         const publishBtn = document.getElementById('publish-btn');
         const resetBtn = document.getElementById('reset-btn');
         const statusDiv = document.getElementById('status');
+        const downloadTemplateBtn = document.getElementById('download-template');
 
         // Palette de couleurs par défaut
         const defaultColors = [
@@ -252,7 +368,6 @@
 
         // Générer une couleur aléatoire qui n'est pas déjà utilisée
         function generateRandomColor() {
-            // Si toutes les couleurs par défaut sont utilisées, générer une vraiment aléatoire
             const availableColors = defaultColors.filter(c => !usedColors.has(c));
             
             if (availableColors.length > 0) {
@@ -261,7 +376,6 @@
                 return color;
             }
             
-            // Générer une couleur aléatoire
             const letters = '0123456789ABCDEF';
             let color = '#';
             for (let i = 0; i < 6; i++) {
@@ -270,6 +384,77 @@
             usedColors.add(color);
             return color;
         }
+
+        // Télécharger le modèle Excel
+        downloadTemplateBtn.addEventListener('click', function() {
+            const templateData = [
+                {
+                    lieu: "Paris",
+                    dept: "75",
+                    date: "5 mai 2026",
+                    dateSort: "2026-05-05",
+                    type: "Manifestation classique",
+                    syndicat: "FNSEA",
+                    participants: "500",
+                    details: "Grande manifestation devant le ministère de l'Agriculture",
+                    lat: "",
+                    lon: "",
+                    couleur: "#3498db"
+                },
+                {
+                    lieu: "Lyon",
+                    dept: "69",
+                    date: "6 mai 2026",
+                    dateSort: "2026-05-06",
+                    type: "Blocage routier",
+                    syndicat: "Coordination Rurale",
+                    participants: "200",
+                    details: "Blocage de l'A7 à hauteur de Lyon Sud",
+                    lat: "",
+                    lon: "",
+                    couleur: "#e74c3c"
+                },
+                {
+                    lieu: "Toulouse",
+                    dept: "31",
+                    date: "7 mai 2026",
+                    dateSort: "2026-05-07",
+                    type: "Action coup de poing",
+                    syndicat: "Confédération Paysanne",
+                    participants: "150",
+                    details: "Action symbolique devant la préfecture",
+                    lat: "",
+                    lon: "",
+                    couleur: "#f39c12"
+                }
+            ];
+
+            // Créer le workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(templateData);
+
+            // Définir la largeur des colonnes
+            ws['!cols'] = [
+                {wch: 15}, // lieu
+                {wch: 8},  // dept
+                {wch: 15}, // date
+                {wch: 12}, // dateSort
+                {wch: 25}, // type
+                {wch: 20}, // syndicat
+                {wch: 12}, // participants
+                {wch: 50}, // details
+                {wch: 10}, // lat
+                {wch: 10}, // lon
+                {wch: 10}  // couleur
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, "Manifestations");
+
+            // Télécharger le fichier
+            XLSX.writeFile(wb, "modele_manifestations.xlsx");
+
+            showStatus('✅ Modèle Excel téléchargé avec succès ! Ouvrez-le et remplissez vos données.', 'success');
+        });
 
         fileInput.addEventListener('change', handleFileSelect);
 
@@ -294,31 +479,28 @@
                 excelData.forEach(row => {
                     const type = row.type || "Autre";
                     
-                    // Si la colonne couleur existe et n'est pas vide
                     if (row.couleur && row.couleur.trim() !== '') {
                         typeColorMap[type] = row.couleur.trim();
                         usedColors.add(row.couleur.trim());
                     } 
-                    // Sinon, générer une couleur si ce type n'en a pas encore
                     else if (!typeColorMap[type]) {
                         typeColorMap[type] = generateRandomColor();
                     }
                     
-                    // Ajouter la couleur à la ligne
                     row.couleur = typeColorMap[type];
                 });
 
                 displayPreview();
                 geocodeBtn.style.display = 'inline-block';
                 resetBtn.style.display = 'inline-block';
-                showStatus('Fichier chargé avec succès ! Vérifiez les données ci-dessous.', 'info');
+                showStatus('✅ Fichier chargé avec succès ! Vérifiez les données ci-dessous.', 'info');
             };
             reader.readAsArrayBuffer(file);
         }
 
         function displayPreview() {
             let html = '<h3>📊 Aperçu des données (' + excelData.length + ' lignes)</h3>';
-            html += '<table><thead><tr>';
+            html += '<div style="overflow-x: auto;"><table><thead><tr>';
             
             const headers = Object.keys(excelData[0] || {});
             headers.forEach(h => {
@@ -338,7 +520,7 @@
                 html += '</tr>';
             });
 
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
             if (excelData.length > 10) {
                 html += `<p style="color: #666; font-style: italic;">Affichage des 10 premières lignes sur ${excelData.length}</p>`;
             }
@@ -409,7 +591,7 @@
                 a.click();
                 URL.revokeObjectURL(url);
 
-                showStatus('✅ Fichier data.json téléchargé ! Uploadez-le dans votre dépôt GitHub.', 'success');
+                showStatus('✅ Fichier data.json téléchargé ! Uploadez-le dans votre dépôt GitHub pour mettre à jour la carte.', 'success');
             } catch (error) {
                 showStatus('❌ Erreur lors de la création du fichier : ' + error.message, 'error');
             }
