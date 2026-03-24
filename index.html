@@ -583,42 +583,19 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // Données des manifestations
-        const manifestations = [
-            {lieu: "Rodez", dept: "Aveyron", date: "15 mai", dateSort: "2026-05-15", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "Une dizaine", lat: 44.3508, lon: 2.5750, details: "Des agriculteurs ont déchargé des bottes de paille sur un rond-point proche de l'aéroport."},
-            {lieu: "Arras", dept: "Pas-de-Calais", date: "15 mai", dateSort: "2026-05-15", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "Plus de 200 agriculteurs", lat: 50.2917, lon: 2.7800, details: "Une centaine de tracteurs ont convergé à l'entrée nord d'Arras."},
-            {lieu: "Montauban", dept: "Tarn-et-Garonne", date: "15 mai", dateSort: "2026-05-15", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "170 personnes", lat: 44.0186, lon: 1.3550, details: "Près de deux cents agriculteurs ont déversé une quarantaine de bennes."},
-            {lieu: "Tarbes", dept: "Hautes-Pyrénées", date: "15 mai", dateSort: "2026-05-15", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 43.2333, lon: 0.0781, details: "Un cortège s'est rendu à la permanence du député Denis Fégné."},
-            {lieu: "Bagnères-de-Bigorre", dept: "Hautes-Pyrénées", date: "15 mai", dateSort: "2026-05-15", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 43.0667, lon: 0.1500, details: "Des pneus et du fumier déversés devant la permanence de Sylvie Ferrer."},
-            {lieu: "Nîmes", dept: "Gard", date: "16 mai", dateSort: "2026-05-16", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "", lat: 43.8367, lon: 4.3601, details: "Déversement de paille et de fruits abimés devant la DDTM."},
-            {lieu: "Narbonne", dept: "Aude", date: "16 mai", dateSort: "2026-05-16", type: "Action coup de poing", syndicat: "JA", participants: "", lat: 43.1839, lon: 3.0044, details: "Des banderoles tendues sur les ronds-points d'entrées de Narbonne."},
-            {lieu: "Ghisonaccia", dept: "Haute-Corse", date: "16 mai", dateSort: "2026-05-16", type: "Action coup de poing", syndicat: "Non précisé", participants: "Une quarantaine", lat: 42.0153, lon: 9.4050, details: "Manifestation suite à une augmentation du prix de l'eau de 15%."},
-            {lieu: "Vierzon", dept: "Cher", date: "16 mai", dateSort: "2026-05-16", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 47.2231, lon: 2.0706, details: "Action devant la permanence de Nicolas Sansu (PCF)."},
-            {lieu: "Bourges", dept: "Cher", date: "16 mai", dateSort: "2026-05-16", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "", lat: 47.0844, lon: 2.3986, details: "Permanences murées à l'aide de parpaings."},
-            {lieu: "Auxerre", dept: "Yonne", date: "17 mai", dateSort: "2026-05-17", type: "Manifestation classique", syndicat: "Union nationale des apiculteurs", participants: "Une cinquantaine", lat: 47.7983, lon: 3.5681, details: "Rassemblement des apiculteurs contre les néonicotinoïdes."},
-            {lieu: "Poitiers", dept: "Vienne", date: "18 mai", dateSort: "2026-05-18", type: "Permanences parlementaires ciblées", syndicat: "JA", participants: "Une vingtaine", lat: 46.5802, lon: 0.3404, details: "Obstruction de l'entrée de la permanence avec des bottes de paille."},
-            {lieu: "Steenvoorde", dept: "Nord", date: "19-20 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "", lat: 50.8183, lon: 2.5933, details: "Blocage de l'A25 pendant deux jours."},
-            {lieu: "Avesnes-sur-Helpe", dept: "Nord", date: "19 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 50.1250, lon: 3.9333, details: "Blocage du rond-point de la Rotonde."},
-            {lieu: "Blois", dept: "Loir-et-Cher", date: "19 mai", dateSort: "2026-05-19", type: "Manifestation classique", syndicat: "Coordination rurale", participants: "", lat: 47.5933, lon: 1.3281, details: "Convergence des luttes avec les taxis."},
-            {lieu: "Blois", dept: "Loir-et-Cher", date: "19 mai", dateSort: "2026-05-19", type: "Manifestation classique", syndicat: "FNSEA", participants: "", lat: 47.5933, lon: 1.3281, details: "Réunion devant la Chambre d'agriculture."},
-            {lieu: "Marly-lez-Valenciennes", dept: "Nord", date: "19 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "30 manifestants", lat: 50.3419, lon: 3.5453, details: "Fermeture de l'A2 dans les deux sens."},
-            {lieu: "Seclin", dept: "Nord", date: "19 mai", dateSort: "2026-05-19", type: "Blocage routier", syndicat: "JA et FNSEA", participants: "70 tracteurs", lat: 50.5514, lon: 3.0308, details: "Blocage de l'A1 avec 70 tracteurs."},
-            {lieu: "Nantes", dept: "Loire-Atlantique", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "FNSEA", participants: "Une dizaine", lat: 47.2184, lon: -1.5536, details: "Opération au Carrefour de la Beaujoire contre les tomates importées."},
-            {lieu: "Avignon", dept: "Vaucluse", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 43.9493, lon: 4.8055, details: "Action au rayon fruits et légumes du Carrefour Courtine."},
-            {lieu: "Pacé", dept: "Ille-et-Vilaine", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "", lat: 48.1500, lon: -1.7667, details: "Action dans le supermarché Carrefour de Pacé."},
-            {lieu: "Châteaulin", dept: "Finistère", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 48.1967, lon: -4.0914, details: "Dénonciation des pratiques de certains distributeurs."},
-            {lieu: "Quimper", dept: "Finistère", date: "20 mai", dateSort: "2026-05-20", type: "Grande distribution", syndicat: "JA et FNSEA", participants: "Une quinzaine", lat: 47.9960, lon: -4.0978, details: "Action sur la vente des tomates cerises françaises."},
-            {lieu: "Guéret", dept: "Creuse", date: "21 mai", dateSort: "2026-05-21", type: "Manifestation classique", syndicat: "Coordination rurale", participants: "Une soixantaine", lat: 46.1706, lon: 1.8714, details: "Soutien à trois membres jugés pour dégradations."},
-            {lieu: "Troyes", dept: "Aube", date: "21 mai", dateSort: "2026-05-21", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "Une soixantaine", lat: 48.2973, lon: 4.0744, details: "Rassemblement devant la préfecture de l'Aube."},
-            {lieu: "Poitiers", dept: "Vienne", date: "21 mai", dateSort: "2026-05-21", type: "Permanences parlementaires ciblées", syndicat: "Coordination rurale", participants: "", lat: 46.5802, lon: 0.3404, details: "Action à la permanence du député Sacha Houlié."},
-            {lieu: "Tulle", dept: "Corrèze", date: "21 mai", dateSort: "2026-05-21", type: "Permanences parlementaires ciblées", syndicat: "JA et FNSEA", participants: "Une cinquantaine", lat: 45.2656, lon: 1.7711, details: "Déversement de fumier devant la permanence de François Hollande."},
-            {lieu: "Beauvais", dept: "Oise", date: "22 mai", dateSort: "2026-05-22", type: "Blocage routier", syndicat: "FNSEA", participants: "", lat: 49.4295, lon: 2.0807, details: "Cortège de tracteurs jusqu'à l'autoroute A16."},
-            {lieu: "Privas", dept: "Ardèche", date: "22 mai", dateSort: "2026-05-22", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "Une vingtaine", lat: 44.7356, lon: 4.5989, details: "Collage d'affiches sur bâtiments publics."},
-            {lieu: "Sault-lès-Rethel", dept: "Ardennes", date: "22 mai", dateSort: "2026-05-22", type: "Action coup de poing", syndicat: "JA et FNSEA", participants: "Une trentaine", lat: 49.5167, lon: 4.3667, details: "Opération de tractage."},
-            {lieu: "Auxerre", dept: "Yonne", date: "22 mai", dateSort: "2026-05-22", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "Soixante-dix", lat: 47.7983, lon: 3.5681, details: "Manifestation devant la préfecture à Auxerre."},
-            {lieu: "Le Mans", dept: "Sarthe", date: "23 mai", dateSort: "2026-05-23", type: "Manifestation classique", syndicat: "JA et FNSEA", participants: "", lat: 48.0077, lon: 0.1984, details: "Actions devant les permanences des députés sarthois."},
-            {lieu: "Saugues", dept: "Haute-Loire", date: "23 mai", dateSort: "2026-05-23", type: "Manifestation classique", syndicat: "FNSEA", participants: "", lat: 44.9583, lon: 3.5444, details: "Rassemblement en soutien à la Loi Duplomb."}
-        ];
 
+let manifestations = [];
+
+const storedManifestations = localStorage.getItem('manifestations');
+
+if (storedManifestations) {
+    manifestations = JSON.parse(storedManifestations);
+    console.log("Données importées depuis le back-office :", manifestations);
+} else {
+    manifestations = []; // ou ton ancienne liste si tu veux un fallback
+    console.warn("Aucune donnée trouvée. Importez un fichier Excel.");
+}
+       
         // Initialisation de la carte
         const map = L.map('map').setView([46.603354, 1.888334], 6);
 
