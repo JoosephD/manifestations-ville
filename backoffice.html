@@ -313,32 +313,154 @@
         const statusDiv = document.getElementById('status');
         const downloadTemplateBtn = document.getElementById('download-template');
 
-        // Palette de couleurs par défaut
+        // Palette de couleurs bien contrastées
         const defaultColors = [
-            "#e74c3c", "#3498db", "#f39c12", "#9b59b6", "#2ecc71",
-            "#e67e22", "#1abc9c", "#34495e", "#f1c40f", "#c0392b",
-            "#16a085", "#27ae60", "#2980b9", "#8e44ad", "#d35400"
+            "#e74c3c",  // Rouge vif
+            "#3498db",  // Bleu
+            "#f39c12",  // Orange
+            "#9b59b6",  // Violet
+            "#2ecc71",  // Vert
+            "#e67e22",  // Orange foncé
+            "#1abc9c",  // Turquoise
+            "#34495e",  // Gris foncé
+            "#f1c40f",  // Jaune
+            "#c0392b",  // Rouge foncé
+            "#16a085",  // Vert-bleu
+            "#27ae60",  // Vert foncé
+            "#2980b9",  // Bleu foncé
+            "#8e44ad",  // Violet foncé
+            "#d35400",  // Orange brûlé
+            "#e84393",  // Rose vif
+            "#00b894",  // Vert menthe
+            "#7f8c8d",  // Gris
+            "#2c3e50",  // Bleu nuit
+            "#fdcb6e"   // Jaune pastel
         ];
 
         let usedColors = new Set();
 
-        // Générer une couleur aléatoire qui n'est pas déjà utilisée
+        // Calculer la distance entre deux couleurs (distance euclidienne dans l'espace RGB)
+        function colorDistance(hex1, hex2) {
+            const r1 = parseInt(hex1.substr(1, 2), 16);
+            const g1 = parseInt(hex1.substr(3, 2), 16);
+            const b1 = parseInt(hex1.substr(5, 2), 16);
+            
+            const r2 = parseInt(hex2.substr(1, 2), 16);
+            const g2 = parseInt(hex2.substr(3, 2), 16);
+            const b2 = parseInt(hex2.substr(5, 2), 16);
+            
+            return Math.sqrt(
+                Math.pow(r1 - r2, 2) + 
+                Math.pow(g1 - g2, 2) + 
+                Math.pow(b1 - b2, 2)
+            );
+        }
+
+        // Convertir HSL en hexadécimal
+        function hslToHex(h, s, l) {
+            s /= 100;
+            l /= 100;
+            
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            
+            let r = 0, g = 0, b = 0;
+            
+            if (0 <= h && h < 60) {
+                r = c; g = x; b = 0;
+            } else if (60 <= h && h < 120) {
+                r = x; g = c; b = 0;
+            } else if (120 <= h && h < 180) {
+                r = 0; g = c; b = x;
+            } else if (180 <= h && h < 240) {
+                r = 0; g = x; b = c;
+            } else if (240 <= h && h < 300) {
+                r = x; g = 0; b = c;
+            } else if (300 <= h && h < 360) {
+                r = c; g = 0; b = x;
+            }
+            
+            r = Math.round((r + m) * 255);
+            g = Math.round((g + m) * 255);
+            b = Math.round((b + m) * 255);
+            
+            return "#" + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+            }).join('');
+        }
+
+        // Générer une couleur aléatoire avec contraste maximal
         function generateRandomColor() {
+            // Essayer d'abord la palette par défaut
             const availableColors = defaultColors.filter(c => !usedColors.has(c));
             
             if (availableColors.length > 0) {
-                const color = availableColors[Math.floor(Math.random() * availableColors.length)];
+                // Trier par distance moyenne avec les couleurs déjà utilisées
+                const sortedColors = availableColors.map(color => {
+                    let totalDistance = 0;
+                    let count = 0;
+                    
+                    usedColors.forEach(usedColor => {
+                        totalDistance += colorDistance(color, usedColor);
+                        count++;
+                    });
+                    
+                    return {
+                        color: color,
+                        avgDistance: count > 0 ? totalDistance / count : Infinity
+                    };
+                }).sort((a, b) => b.avgDistance - a.avgDistance);
+                
+                // Prendre la couleur la plus éloignée
+                const color = sortedColors[0].color;
                 usedColors.add(color);
                 return color;
             }
             
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
+            // Si toutes les couleurs par défaut sont utilisées, générer avec algorithme HSL
+            const usedColorsArray = Array.from(usedColors);
+            const minDistance = 100; // Distance minimale souhaitée entre couleurs
+            let attempts = 0;
+            let bestColor = null;
+            let bestMinDistance = 0;
+            
+            while (attempts < 50) {
+                // Générer une couleur avec saturation et luminosité élevées pour visibilité
+                const hue = Math.floor(Math.random() * 360);
+                const saturation = 65 + Math.floor(Math.random() * 35); // 65-100%
+                const lightness = 40 + Math.floor(Math.random() * 20);  // 40-60%
+                
+                const color = hslToHex(hue, saturation, lightness);
+                
+                // Calculer la distance minimale avec toutes les couleurs existantes
+                let minDist = Infinity;
+                for (const usedColor of usedColorsArray) {
+                    const dist = colorDistance(color, usedColor);
+                    if (dist < minDist) {
+                        minDist = dist;
+                    }
+                }
+                
+                // Garder la meilleure couleur trouvée
+                if (minDist > bestMinDistance) {
+                    bestMinDistance = minDist;
+                    bestColor = color;
+                }
+                
+                // Si on a trouvé une couleur suffisamment éloignée, on s'arrête
+                if (minDist >= minDistance) {
+                    usedColors.add(color);
+                    return color;
+                }
+                
+                attempts++;
             }
-            usedColors.add(color);
-            return color;
+            
+            // Retourner la meilleure couleur trouvée
+            usedColors.add(bestColor);
+            return bestColor;
         }
 
         // Télécharger le modèle Excel
@@ -432,14 +554,21 @@
 
                 // Assigner des couleurs aux types qui n'en ont pas
                 const typeColorMap = {};
+                
+                // D'abord, collecter toutes les couleurs déjà définies
                 excelData.forEach(row => {
                     const type = row.type || "Autre";
-                    
                     if (row.couleur && row.couleur.trim() !== '') {
                         typeColorMap[type] = row.couleur.trim();
                         usedColors.add(row.couleur.trim());
-                    } 
-                    else if (!typeColorMap[type]) {
+                    }
+                });
+                
+                // Ensuite, générer les couleurs manquantes
+                excelData.forEach(row => {
+                    const type = row.type || "Autre";
+                    
+                    if (!typeColorMap[type]) {
                         typeColorMap[type] = generateRandomColor();
                     }
                     
