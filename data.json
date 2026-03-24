@@ -1,26 +1,41 @@
 [
   {
-    "lieu": "Beaucaire",
-    "dept": "Gard",
-    "date": 46159,
-    "dateSort": 46159,
+    "lieu": "Paris",
+    "dept": "75",
+    "date": "5 mai 2026",
+    "dateSort": "2026-05-05",
     "type": "Manifestation classique",
-    "syndicat": "JA et FNSEA",
-    "participants": "Une centaine",
-    "details": "Description de la manifestation",
-    "lat": 43.731088,
-    "lon": 4.347971
+    "syndicat": "FNSEA",
+    "participants": "500",
+    "details": "Grande manifestation devant le ministère de l'Agriculture",
+    "lat": 48.8408006,
+    "lon": 2.2412871,
+    "couleur": "#3498db"
   },
   {
-    "lieu": "Rodez",
-    "dept": "Aveyron",
-    "date": 46160,
-    "dateSort": 46160,
-    "type": "Grande distribution",
-    "syndicat": "CR",
-    "participants": "Une cinquantaine",
-    "details": "Description de la manifestation",
-    "lat": 44.342995,
-    "lon": 2.568962
+    "lieu": "Lyon",
+    "dept": "69",
+    "date": "6 mai 2026",
+    "dateSort": "2026-05-06",
+    "type": "Blocage routier",
+    "syndicat": "Coordination Rurale",
+    "participants": "200",
+    "details": "Blocage de l'A7 à hauteur de Lyon Sud",
+    "lat": 45.7358369,
+    "lon": 4.8568756,
+    "couleur": "#e74c3c"
+  },
+  {
+    "lieu": "Toulouse",
+    "dept": "31",
+    "date": "7 mai 2026",
+    "dateSort": "2026-05-07",
+    "type": "Action coup de poing",
+    "syndicat": "Confédération Paysanne",
+    "participants": "150",
+    "details": "Action symbolique devant la préfecture",
+    "lat": 43.6055419,
+    "lon": 1.3849896,
+    "couleur": "#f39c12"
   }
 ]
