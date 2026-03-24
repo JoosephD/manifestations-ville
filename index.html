@@ -333,9 +333,8 @@
                 left: 0;
                 max-width: 100%;
                 width: 100%;
-                max-height: 35vh;
-                padding: 12px;
-                border-radius: 15px 15px 0 0;
+                max-height: 70vh;
+                border-radius: 20px 20px 0 0;
                 transform: translateY(100%);
                 transition: transform 0.3s ease-in-out;
             }
@@ -345,100 +344,33 @@
             }
 
             .control-panel h2 {
-                font-size: 16px;
+                font-size: 18px;
                 text-align: center;
-                margin: 0 0 10px 0;
-                padding-bottom: 5px;
-            }
-
-            .stats {
-                margin-bottom: 10px;
-            }
-
-            .stat-item {
-                font-size: 12px;
-                margin: 4px 0;
-            }
-
-            .timeline-section {
-                margin: 10px 0;
-                padding: 10px;
-            }
-
-            .timeline-section h3 {
-                font-size: 14px;
-                margin: 5px 0;
-            }
-
-            .timeline-date {
-                font-size: 13px;
-                padding: 5px;
-                margin: 5px 0;
-            }
-
-            .timeline-slider {
-                margin: 8px 0;
             }
 
             .timeline-controls {
-                gap: 5px;
-                margin-top: 5px;
+                flex-direction: column;
             }
 
             .timeline-controls button {
-                padding: 6px 4px;
-                font-size: 10px;
-            }
-
-            #reset-timeline {
-                padding: 6px;
-                font-size: 11px;
-                margin-top: 5px;
-            }
-
-            .filter-section {
-                margin: 10px 0;
+                width: 100%;
                 padding: 10px;
             }
 
-            .filter-section h3 {
-                font-size: 13px;
-                margin: 5px 0;
-            }
-
-            .filter-group label {
-                font-size: 11px;
-                padding: 4px;
-                margin: 3px 0;
-            }
-
             .filter-buttons {
-                gap: 5px;
-                margin-top: 5px;
+                flex-direction: column;
             }
 
             .filter-buttons button {
-                padding: 6px;
-                font-size: 10px;
+                width: 100%;
             }
 
-            .count-badge {
-                font-size: 9px;
-                padding: 1px 5px;
-            }
-
-            /* Masquer le filtre syndicat sur mobile */
-            #syndicat-filter-section {
-                display: none;
-            }
-
-            /* Légende repositionnée en bas à gauche sur mobile */
             .legend {
-                bottom: 10px;
+                bottom: auto;
+                top: 60px;
                 left: 10px;
-                top: auto;
                 padding: 8px;
-                max-width: 140px;
+                max-width: 150px;
             }
 
             .legend h3 {
@@ -447,14 +379,32 @@
             }
 
             .legend-item {
-                font-size: 9px;
-                margin: 2px 0;
+                font-size: 10px;
+                margin: 3px 0;
             }
 
             .legend-color {
                 width: 12px;
                 height: 12px;
                 margin-right: 5px;
+            }
+
+            .stat-item {
+                font-size: 13px;
+            }
+
+            .filter-group label {
+                font-size: 13px;
+                padding: 8px 5px;
+            }
+
+            .count-badge {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+
+            .timeline-date {
+                font-size: 14px;
             }
 
             /* Ajuster la carte pour mobile */
@@ -466,7 +416,7 @@
         /* Très petits écrans */
         @media (max-width: 360px) {
             .control-panel {
-                padding: 10px;
+                padding: 12px;
             }
 
             .toggle-panel {
@@ -475,19 +425,23 @@
             }
 
             .legend {
-                max-width: 120px;
+                max-width: 130px;
                 padding: 6px;
             }
 
             .filter-section {
-                padding: 8px;
+                padding: 10px;
             }
         }
 
         /* Mode paysage mobile */
         @media (max-height: 500px) and (max-width: 900px) {
             .control-panel {
-                max-height: 60vh;
+                max-height: 80vh;
+            }
+
+            .legend {
+                display: none;
             }
         }
     </style>
@@ -498,12 +452,12 @@
     <button class="toggle-panel" id="toggle-panel">☰</button>
 
     <div class="control-panel" id="control-panel">
-        <h2>🎛️ Contrôle</h2>
+        <h2>🎛️ Panneau de contrôle</h2>
         
         <!-- Statistiques -->
         <div class="stats">
             <div class="stat-item">
-                <span class="stat-label">Affichées :</span>
+                <span class="stat-label">Manifestations affichées :</span>
                 <span class="stat-value" id="visible-count">0</span>
             </div>
             <div class="stat-item">
@@ -518,12 +472,12 @@
             <div class="timeline-date" id="current-date">Toutes les dates</div>
             <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="8" value="0" step="1">
             <div class="timeline-controls">
-                <button id="prev-day">◀</button>
-                <button id="play-pause">▶</button>
-                <button id="next-day">▶</button>
+                <button id="prev-day">◀ Précédent</button>
+                <button id="play-pause">▶ Lecture</button>
+                <button id="next-day">Suivant ▶</button>
             </div>
-            <div style="margin-top: 5px; text-align: center;">
-                <button class="btn-all" style="width: 100%;" id="reset-timeline">Toutes dates</button>
+            <div style="margin-top: 10px; text-align: center;">
+                <button class="btn-all" style="width: 100%;" id="reset-timeline">Afficher toutes les dates</button>
             </div>
         </div>
         
@@ -532,13 +486,13 @@
             <h3>📌 Type d'action</h3>
             <div class="filter-group" id="type-filters"></div>
             <div class="filter-buttons">
-                <button class="btn-all" id="select-all-types">Tout</button>
-                <button class="btn-none" id="select-none-types">Aucun</button>
+                <button class="btn-all" id="select-all-types">Tout sélectionner</button>
+                <button class="btn-none" id="select-none-types">Tout désélectionner</button>
             </div>
         </div>
         
-        <!-- Filtre par syndicat (masqué sur mobile) -->
-        <div class="filter-section" id="syndicat-filter-section">
+        <!-- Filtre par syndicat -->
+        <div class="filter-section">
             <h3>🚜 Syndicat</h3>
             <div class="filter-group" id="syndicat-filters"></div>
             <div class="filter-buttons">
@@ -812,10 +766,10 @@
         playPauseBtn.addEventListener('click', () => {
             if (isPlaying) {
                 clearInterval(playInterval);
-                playPauseBtn.textContent = '▶';
+                playPauseBtn.textContent = '▶ Lecture';
                 isPlaying = false;
             } else {
-                playPauseBtn.textContent = '⏸';
+                playPauseBtn.textContent = '⏸ Pause';
                 isPlaying = true;
                 playInterval = setInterval(() => {
                     if (currentDateIndex < dates.length - 1) {
@@ -823,7 +777,7 @@
                         updateTimeline();
                     } else {
                         clearInterval(playInterval);
-                        playPauseBtn.textContent = '▶';
+                        playPauseBtn.textContent = '▶ Lecture';
                         isPlaying = false;
                     }
                 }, 2000);
@@ -836,7 +790,7 @@
             updateTimeline();
             if (isPlaying) {
                 clearInterval(playInterval);
-                playPauseBtn.textContent = '▶';
+                playPauseBtn.textContent = '▶ Lecture';
                 isPlaying = false;
             }
         });
