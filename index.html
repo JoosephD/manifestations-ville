@@ -582,273 +582,206 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Données des manifestations
-
 let manifestations = [];
 
-const storedManifestations = localStorage.getItem('manifestations');
+// Chargement des données depuis data.json
+fetch("data.json")
+  .then(r => r.json())
+  .then(data => {
+      manifestations = data;
+      console.log("Données chargées :", manifestations);
 
-if (storedManifestations) {
-    manifestations = JSON.parse(storedManifestations);
-    console.log("Données importées depuis le back-office :", manifestations);
-} else {
-    manifestations = []; // ou ton ancienne liste si tu veux un fallback
-    console.warn("Aucune donnée trouvée. Importez un fichier Excel.");
+      createMarkers();
+      initFilters();
+      initTimeline();
+      applyFilters();
+
+      document.getElementById('total-count').textContent = manifestations.length;
+  })
+  .catch(err => {
+      console.error("Erreur de chargement data.json :", err);
+      alert("Impossible de charger data.json — assurez-vous qu'il est présent dans GitHub Pages.");
+  });
+
+
+// Initialisation de la carte
+const map = L.map('map').setView([46.603354, 1.888334], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18
+}).addTo(map);
+
+
+// Couleur selon type
+function getColor(type) {
+    switch(type) {
+        case "Blocage routier": return "#e74c3c";
+        case "Manifestation classique": return "#3498db";
+        case "Action coup de poing": return "#f39c12";
+        case "Permanences parlementaires ciblées": return "#9b59b6";
+        case "Grande distribution": return "#2ecc71";
+        default: return "#95a5a6";
+    }
 }
-       
-        // Initialisation de la carte
-        const map = L.map('map').setView([46.603354, 1.888334], 6);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 18
-        }).addTo(map);
+let markers = [];
 
-        // Fonction pour obtenir la couleur selon le type d'action
-        function getColor(type) {
-            switch(type) {
-                case "Blocage routier": return "#e74c3c";
-                case "Manifestation classique": return "#3498db";
-                case "Action coup de poing": return "#f39c12";
-                case "Permanences parlementaires ciblées": return "#9b59b6";
-                case "Grande distribution": return "#2ecc71";
-                default: return "#95a5a6";
-            }
+function createMarkers() {
+    markers = [];
+
+    manifestations.forEach(manif => {
+        if (!manif.lat || !manif.lon) return;
+
+        const marker = L.circleMarker([manif.lat, manif.lon], {
+            radius: 8,
+            fillColor: getColor(manif.type),
+            color: "#333",
+            weight: 2,
+            fillOpacity: 0.8
+        });
+
+        marker.bindPopup(`
+            <div class="popup-content">
+                <h3>${manif.lieu} (${manif.dept})</h3>
+                <p><strong>Date :</strong> ${manif.date}</p>
+                <p><strong>Type :</strong> ${manif.type}</p>
+                <p><strong>Syndicat(s) :</strong> ${manif.syndicat}</p>
+                <p><strong>Participants :</strong> ${manif.participants || 'Non précisé'}</p>
+                <p><strong>Détails :</strong> ${manif.details}</p>
+            </div>
+        `);
+
+        marker.manifestation = manif;
+        markers.push(marker);
+    });
+}
+
+
+// ---------------------
+// FILTRES
+// ---------------------
+
+function initFilters() {
+    const typeFiltersDiv = document.getElementById('type-filters');
+    const syndicatFiltersDiv = document.getElementById('syndicat-filters');
+
+    typeFiltersDiv.innerHTML = "";
+    syndicatFiltersDiv.innerHTML = "";
+
+    const types = [...new Set(manifestations.map(m => m.type))];
+    const syndicats = [...new Set(manifestations.map(m => m.syndicat))];
+
+    const typeCounts = {};
+    const syndicatCounts = {};
+
+    manifestations.forEach(m => {
+        typeCounts[m.type] = (typeCounts[m.type] || 0) + 1;
+        syndicatCounts[m.syndicat] = (syndicatCounts[m.syndicat] || 0) + 1;
+    });
+
+    // Types
+    types.forEach(type => {
+        const lbl = document.createElement("label");
+        lbl.innerHTML = `
+            <input type="checkbox" class="type-filter" value="${type}" checked>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${getColor(type)};margin-right:5px;"></span>
+            ${type} <span class="count-badge">${typeCounts[type]}</span>
+        `;
+        typeFiltersDiv.appendChild(lbl);
+    });
+
+    // Syndicats
+    syndicats.forEach(s => {
+        const lbl = document.createElement("label");
+        lbl.innerHTML = `
+            <input type="checkbox" class="syndicat-filter" value="${s}" checked>
+            ${s} <span class="count-badge">${syndicatCounts[s]}</span>
+        `;
+        syndicatFiltersDiv.appendChild(lbl);
+    });
+
+    // Listeners
+    document.querySelectorAll('.type-filter, .syndicat-filter')
+      .forEach(cb => cb.addEventListener('change', applyFilters));
+}
+
+
+// ---------------------
+// TIMELINE
+// ---------------------
+
+let dates = [];
+let currentDateIndex = 0;
+
+function initTimeline() {
+    dates = [
+        {label: "Toutes les dates", value: null},
+        ...Array.from(new Set(manifestations.map(m => m.dateSort)))
+            .sort()
+            .map(d => ({label: d, value: d}))
+    ];
+
+    document.getElementById("timeline-slider").max = dates.length - 1;
+}
+
+function updateTimeline() {
+    document.getElementById("current-date").textContent = dates[currentDateIndex].label;
+    applyFilters();
+}
+
+
+// ---------------------
+// APPLICATION DES FILTRES
+// ---------------------
+
+function applyFilters() {
+    const selectedTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(el => el.value);
+    const selectedSyndicats = Array.from(document.querySelectorAll('.syndicat-filter:checked')).map(el => el.value);
+    const selectedDate = dates[currentDateIndex].value;
+
+    let visibleCount = 0;
+
+    markers.forEach(marker => {
+        const m = marker.manifestation;
+
+        const matchType = selectedTypes.includes(m.type);
+        const matchSyn = selectedSyndicats.includes(m.syndicat);
+        const matchDate = !selectedDate || m.dateSort === selectedDate;
+
+        if (matchType && matchSyn && matchDate) {
+            if (!map.hasLayer(marker)) marker.addTo(map);
+            visibleCount++;
+        } else {
+            if (map.hasLayer(marker)) map.removeLayer(marker);
         }
+    });
 
-        // Stockage des marqueurs
-        let markers = [];
+    document.getElementById('visible-count').textContent = visibleCount;
+}
 
-        // Fonction pour créer les marqueurs
-        function createMarkers() {
-            manifestations.forEach(manif => {
-                const marker = L.circleMarker([manif.lat, manif.lon], {
-                    radius: 8,
-                    fillColor: getColor(manif.type),
-                    color: "#333",
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                });
 
-                const popupContent = `
-                    <div class="popup-content">
-                        <h3>${manif.lieu} (${manif.dept})</h3>
-                        <p><strong>Date :</strong> ${manif.date}</p>
-                        <p><strong>Type :</strong> ${manif.type}</p>
-                        <p><strong>Syndicat(s) :</strong> ${manif.syndicat}</p>
-                        <p><strong>Participants :</strong> ${manif.participants || 'Non précisé'}</p>
-                        <p><strong>Détails :</strong> ${manif.details}</p>
-                    </div>
-                `;
+// -------------------------
+// MOBILE PANEL
+// -------------------------
 
-                marker.bindPopup(popupContent);
-                marker.manifestation = manif;
-                markers.push(marker);
-            });
-        }
+const toggleBtn = document.getElementById('toggle-panel');
+const controlPanel = document.getElementById('control-panel');
+const legend = document.getElementById('legend');
 
-        // Création des marqueurs
-        createMarkers();
+toggleBtn.addEventListener('click', () => {
+    controlPanel.classList.toggle('active');
+    legend.classList.toggle('shifted');
+    toggleBtn.textContent = controlPanel.classList.contains('active') ? '✕' : '☰';
+});
 
-        // Extraction des types et syndicats uniques
-        const types = [...new Set(manifestations.map(m => m.type))];
-        const syndicats = [...new Set(manifestations.map(m => m.syndicat))];
-        
-        // Comptage des occurrences
-        const typeCounts = {};
-        const syndicatCounts = {};
-        
-        manifestations.forEach(m => {
-            typeCounts[m.type] = (typeCounts[m.type] || 0) + 1;
-            syndicatCounts[m.syndicat] = (syndicatCounts[m.syndicat] || 0) + 1;
-        });
-
-        // Création des filtres par type
-        const typeFiltersDiv = document.getElementById('type-filters');
-        types.forEach(type => {
-            const label = document.createElement('label');
-            label.innerHTML = `
-                <input type="checkbox" class="type-filter" value="${type}" checked>
-                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${getColor(type)}; margin-right: 5px;"></span>
-                ${type}
-                <span class="count-badge">${typeCounts[type]}</span>
-            `;
-            typeFiltersDiv.appendChild(label);
-        });
-
-        // Création des filtres par syndicat
-        const syndicatFiltersDiv = document.getElementById('syndicat-filters');
-        syndicats.forEach(syndicat => {
-            const label = document.createElement('label');
-            label.innerHTML = `
-                <input type="checkbox" class="syndicat-filter" value="${syndicat}" checked>
-                ${syndicat}
-                <span class="count-badge">${syndicatCounts[syndicat]}</span>
-            `;
-            syndicatFiltersDiv.appendChild(label);
-        });
-
-        // Timeline
-        const dates = [
-            {label: "Toutes les dates", value: null},
-            {label: "15 mai 2026", value: "2026-05-15"},
-            {label: "16 mai 2026", value: "2026-05-16"},
-            {label: "17 mai 2026", value: "2026-05-17"},
-            {label: "18 mai 2026", value: "2026-05-18"},
-            {label: "19 mai 2026", value: "2026-05-19"},
-            {label: "20 mai 2026", value: "2026-05-20"},
-            {label: "21 mai 2026", value: "2026-05-21"},
-            {label: "22 mai 2026", value: "2026-05-22"},
-            {label: "23 mai 2026", value: "2026-05-23"}
-        ];
-
-        const timelineSlider = document.getElementById('timeline-slider');
-        const currentDateDiv = document.getElementById('current-date');
-        let currentDateIndex = 0;
-        let isPlaying = false;
-        let playInterval;
-
-        // Fonction pour appliquer les filtres
-        function applyFilters() {
-            const selectedTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.value);
-            const selectedSyndicats = Array.from(document.querySelectorAll('.syndicat-filter:checked')).map(cb => cb.value);
-            const selectedDate = dates[currentDateIndex].value;
-
-            let visibleCount = 0;
-
-            markers.forEach(marker => {
-                const manif = marker.manifestation;
-                const typeMatch = selectedTypes.includes(manif.type);
-                const syndicatMatch = selectedSyndicats.includes(manif.syndicat);
-                const dateMatch = !selectedDate || manif.dateSort === selectedDate;
-
-                if (typeMatch && syndicatMatch && dateMatch) {
-                    if (!map.hasLayer(marker)) {
-                        marker.addTo(map);
-                    }
-                    visibleCount++;
-                } else {
-                    if (map.hasLayer(marker)) {
-                        map.removeLayer(marker);
-                    }
-                }
-            });
-
-            document.getElementById('visible-count').textContent = visibleCount;
-        }
-
-        // Mise à jour de la timeline
-        function updateTimeline() {
-            currentDateDiv.textContent = dates[currentDateIndex].label;
-            timelineSlider.value = currentDateIndex;
-            applyFilters();
-        }
-
-        // Event listeners pour les filtres
-        document.querySelectorAll('.type-filter, .syndicat-filter').forEach(checkbox => {
-            checkbox.addEventListener('change', applyFilters);
-        });
-
-        // Boutons "Tout sélectionner / désélectionner"
-        document.getElementById('select-all-types').addEventListener('click', () => {
-            document.querySelectorAll('.type-filter').forEach(cb => cb.checked = true);
-            applyFilters();
-        });
-
-        document.getElementById('select-none-types').addEventListener('click', () => {
-            document.querySelectorAll('.type-filter').forEach(cb => cb.checked = false);
-            applyFilters();
-        });
-
-        document.getElementById('select-all-syndicats').addEventListener('click', () => {
-            document.querySelectorAll('.syndicat-filter').forEach(cb => cb.checked = true);
-            applyFilters();
-        });
-
-        document.getElementById('select-none-syndicats').addEventListener('click', () => {
-            document.querySelectorAll('.syndicat-filter').forEach(cb => cb.checked = false);
-            applyFilters();
-        });
-
-        // Timeline slider
-        timelineSlider.addEventListener('input', (e) => {
-            currentDateIndex = parseInt(e.target.value);
-            updateTimeline();
-        });
-
-        // Boutons de navigation temporelle
-        document.getElementById('prev-day').addEventListener('click', () => {
-            if (currentDateIndex > 0) {
-                currentDateIndex--;
-                updateTimeline();
-            }
-        });
-
-        document.getElementById('next-day').addEventListener('click', () => {
-            if (currentDateIndex < dates.length - 1) {
-                currentDateIndex++;
-                updateTimeline();
-            }
-        });
-
-        // Bouton lecture/pause
-        const playPauseBtn = document.getElementById('play-pause');
-        playPauseBtn.addEventListener('click', () => {
-            if (isPlaying) {
-                clearInterval(playInterval);
-                playPauseBtn.textContent = '▶';
-                isPlaying = false;
-            } else {
-                playPauseBtn.textContent = '⏸';
-                isPlaying = true;
-                playInterval = setInterval(() => {
-                    if (currentDateIndex < dates.length - 1) {
-                        currentDateIndex++;
-                        updateTimeline();
-                    } else {
-                        clearInterval(playInterval);
-                        playPauseBtn.textContent = '▶';
-                        isPlaying = false;
-                    }
-                }, 2000);
-            }
-        });
-
-        // Reset timeline
-        document.getElementById('reset-timeline').addEventListener('click', () => {
-            currentDateIndex = 0;
-            updateTimeline();
-            if (isPlaying) {
-                clearInterval(playInterval);
-                playPauseBtn.textContent = '▶';
-                isPlaying = false;
-            }
-        });
-
-        // Toggle panel pour mobile avec gestion de la légende
-        const toggleBtn = document.getElementById('toggle-panel');
-        const controlPanel = document.getElementById('control-panel');
-        const legend = document.getElementById('legend');
-        
-        toggleBtn.addEventListener('click', () => {
-            controlPanel.classList.toggle('active');
-            legend.classList.toggle('shifted');
-            toggleBtn.textContent = controlPanel.classList.contains('active') ? '✕' : '☰';
-        });
-
-        // Fermer le panel en cliquant sur la carte (mobile uniquement)
-        map.on('click', () => {
-            if (window.innerWidth <= 480 && controlPanel.classList.contains('active')) {
-                controlPanel.classList.remove('active');
-                legend.classList.remove('shifted');
-                toggleBtn.textContent = '☰';
-            }
-        });
-
-        // Initialisation
-        document.getElementById('total-count').textContent = manifestations.length;
-        applyFilters();
-    </script>
+map.on('click', () => {
+    if (window.innerWidth <= 480 && controlPanel.classList.contains('active')) {
+        controlPanel.classList.remove('active');
+        legend.classList.remove('shifted');
+        toggleBtn.textContent = '☰';
+    }
+});
+</script>
 </body>
 </html>
