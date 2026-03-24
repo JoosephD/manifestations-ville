@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Back-Office - Import Manifestations</title>
+
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script defer src="js/backoffice.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🎛️ Back‑Office – Mise à jour de la carte</h1>
+        <p>Importez un fichier Excel, le géocodage se fait automatiquement.</p>
+    </div>
+
+    <div class="card">
+        <h2>📋 Instructions</h2>
+
+        <ol>
+            <li>Téléchargez le template Excel ci‑dessous</li>
+            <li>Remplissez les colonnes : lieu, département, date, type…</li>
+            <li>Déposez le fichier → le système géocode automatiquement</li>
+            <li>La carte se mettra à jour automatiquement</li>
+        </ol>
+
+        <button class="btn btn-secondary" onclick="downloadTemplate()">📄 Télécharger le modèle Excel</button>
+    </div>
+
+    <div class="card">
+        <h2>📤 Import des données</h2>
+
+        <div class="upload-zone" id="uploadZone">
+            <h3>Glissez-déposez votre fichier Excel ici</h3>
+            <p>.xlsx ou .xls</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </div>
+
+        <div id="fileInfo" class="file-info">
+            <p><strong>Fichier sélectionné :</strong> <span id="fileName">-</span></p>
+
+            <div class="actions">
+                <button class="btn btn-primary" onclick="processFile()">✅ Importer</button>
+                <button class="btn btn-danger" onclick="cancelUpload()">❌ Annuler</button>
+            </div>
+        </div>
+
+        <div id="progressBar" class="progress-bar">
+            <div id="progressFill" class="progress-fill">0%</div>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <div class="card">
+        <h2>📊 Dernières données importées</h2>
+
+        <p><strong>Total :</strong> <span id="statTotal">0</span> manifestations</p>
+        <p><strong>Dernière mise à jour :</strong> <span id="statDate">-</span></p>
+
+        <table id="tablePreview">
+            <thead>
+                <tr>
+                    <th>Lieu</th>
+                    <th>Département</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Syndicat</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="5" style="text-align:center;color:#777;">Aucune donnée</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🗺️ Actions</h2>
+        <button class="btn btn-secondary" onclick="openMap()">🌍 Ouvrir la carte</button>
+        <button class="btn btn-danger" onclick="resetData()">🗑️ Réinitialiser les données</button>
+    </div>
+
+</div>
+
+</body>
+</html>
