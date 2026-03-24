@@ -6,11 +6,16 @@
     <title>Carte Interactive des Manifestations Agricoles - Mai 2026</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
         }
+        
         #map {
             height: 100vh;
             width: 100%;
@@ -97,6 +102,7 @@
         .filter-group input[type="checkbox"] {
             margin-right: 8px;
             cursor: pointer;
+            flex-shrink: 0;
         }
         
         .filter-buttons {
@@ -217,6 +223,7 @@
             border-radius: 50%;
             margin-right: 8px;
             border: 2px solid #333;
+            flex-shrink: 0;
         }
         
         /* Popup */
@@ -250,12 +257,201 @@
             font-weight: bold;
             margin-left: 5px;
         }
+
+        /* Bouton toggle pour mobile */
+        .toggle-panel {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #2c5f2d;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 1001;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .toggle-panel:active {
+            background: #1e4620;
+        }
+
+        /* RESPONSIVE - Tablettes */
+        @media (max-width: 768px) {
+            .control-panel {
+                max-width: 300px;
+                padding: 15px;
+                max-height: 85vh;
+            }
+            
+            .control-panel h2 {
+                font-size: 18px;
+            }
+            
+            .control-panel h3 {
+                font-size: 14px;
+            }
+            
+            .filter-group label {
+                font-size: 12px;
+            }
+            
+            .legend {
+                bottom: 10px;
+                left: 10px;
+                padding: 10px;
+                max-width: 200px;
+            }
+            
+            .legend h3 {
+                font-size: 12px;
+            }
+            
+            .legend-item {
+                font-size: 11px;
+            }
+            
+            .legend-color {
+                width: 15px;
+                height: 15px;
+            }
+        }
+
+        /* RESPONSIVE - Mobile */
+        @media (max-width: 480px) {
+            .toggle-panel {
+                display: block;
+            }
+
+            .control-panel {
+                top: auto;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                max-width: 100%;
+                width: 100%;
+                max-height: 70vh;
+                border-radius: 20px 20px 0 0;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-in-out;
+            }
+
+            .control-panel.active {
+                transform: translateY(0);
+            }
+
+            .control-panel h2 {
+                font-size: 18px;
+                text-align: center;
+            }
+
+            .timeline-controls {
+                flex-direction: column;
+            }
+
+            .timeline-controls button {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .filter-buttons {
+                flex-direction: column;
+            }
+
+            .filter-buttons button {
+                width: 100%;
+            }
+
+            .legend {
+                bottom: auto;
+                top: 60px;
+                left: 10px;
+                padding: 8px;
+                max-width: 150px;
+            }
+
+            .legend h3 {
+                font-size: 11px;
+                margin-bottom: 5px;
+            }
+
+            .legend-item {
+                font-size: 10px;
+                margin: 3px 0;
+            }
+
+            .legend-color {
+                width: 12px;
+                height: 12px;
+                margin-right: 5px;
+            }
+
+            .stat-item {
+                font-size: 13px;
+            }
+
+            .filter-group label {
+                font-size: 13px;
+                padding: 8px 5px;
+            }
+
+            .count-badge {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+
+            .timeline-date {
+                font-size: 14px;
+            }
+
+            /* Ajuster la carte pour mobile */
+            #map {
+                height: 100vh;
+            }
+        }
+
+        /* Très petits écrans */
+        @media (max-width: 360px) {
+            .control-panel {
+                padding: 12px;
+            }
+
+            .toggle-panel {
+                padding: 10px 14px;
+                font-size: 16px;
+            }
+
+            .legend {
+                max-width: 130px;
+                padding: 6px;
+            }
+
+            .filter-section {
+                padding: 10px;
+            }
+        }
+
+        /* Mode paysage mobile */
+        @media (max-height: 500px) and (max-width: 900px) {
+            .control-panel {
+                max-height: 80vh;
+            }
+
+            .legend {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
     
-    <div class="control-panel">
+    <button class="toggle-panel" id="toggle-panel">☰</button>
+
+    <div class="control-panel" id="control-panel">
         <h2>🎛️ Panneau de contrôle</h2>
         
         <!-- Statistiques -->
@@ -276,9 +472,9 @@
             <div class="timeline-date" id="current-date">Toutes les dates</div>
             <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="8" value="0" step="1">
             <div class="timeline-controls">
-                <button id="prev-day">◀ Jour précédent</button>
+                <button id="prev-day">◀ Précédent</button>
                 <button id="play-pause">▶ Lecture</button>
-                <button id="next-day">Jour suivant ▶</button>
+                <button id="next-day">Suivant ▶</button>
             </div>
             <div style="margin-top: 10px; text-align: center;">
                 <button class="btn-all" style="width: 100%;" id="reset-timeline">Afficher toutes les dates</button>
@@ -584,7 +780,7 @@
                         playPauseBtn.textContent = '▶ Lecture';
                         isPlaying = false;
                     }
-                }, 2000); // Change de jour toutes les 2 secondes
+                }, 2000);
             }
         });
 
@@ -596,6 +792,23 @@
                 clearInterval(playInterval);
                 playPauseBtn.textContent = '▶ Lecture';
                 isPlaying = false;
+            }
+        });
+
+        // Toggle panel pour mobile
+        const toggleBtn = document.getElementById('toggle-panel');
+        const controlPanel = document.getElementById('control-panel');
+        
+        toggleBtn.addEventListener('click', () => {
+            controlPanel.classList.toggle('active');
+            toggleBtn.textContent = controlPanel.classList.contains('active') ? '✕' : '☰';
+        });
+
+        // Fermer le panel en cliquant sur la carte (mobile uniquement)
+        map.on('click', () => {
+            if (window.innerWidth <= 480 && controlPanel.classList.contains('active')) {
+                controlPanel.classList.remove('active');
+                toggleBtn.textContent = '☰';
             }
         });
 
